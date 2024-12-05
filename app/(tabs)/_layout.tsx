@@ -5,7 +5,7 @@ export default function TabLayout() {
   return (
     <Tabs screenOptions={{ tabBarActiveTintColor: '#00439C' }}>
       <Tabs.Screen
-        name="audio/index"
+        name="audio"
         options={{
           title: '',
           tabBarIcon: ({ color }) => <Ionicons name="musical-note-outline" size={30} color={color} />,
@@ -20,7 +20,7 @@ export default function TabLayout() {
           headerShown:false
         }}
       />
-      <Tabs.Screen name="audio/record/index" options={{href:null}}/>
+      <Tabs.Screen name="audio/record" options={{href:null}}/>
     </Tabs>
   );
 }
