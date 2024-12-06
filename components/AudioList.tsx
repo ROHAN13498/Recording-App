@@ -1,18 +1,37 @@
+import React, { useState, useEffect } from "react";
 import { View, FlatList, StyleSheet, Text } from "react-native";
-import React from "react";
 import AudioListItem from "./AudioListItem";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Dummy data for the audio items
-const audioData = [
-  { id: '1', name: 'Audio 1', duration: '3:20', size: 5.6 },
-  { id: '2', name: 'Audio 2', duration: '4:15', size: 7.2 },
-  { id: '3', name: 'Audio 3', duration: '2:45', size: 3.1 },
-  { id: '4', name: 'Audio 4', duration: '5:00', size: 6.8 },
-  { id: '5', name: 'Audio 5', duration: '3:30', size: 4.5 },
-];
+// Define the type for the audio data
+interface AudioItem {
+  uri: string;
+  duration: string;
+  size: number;
+}
 
 const AudioList = () => {
-  
+  const [audioData, setAudioData] = useState<AudioItem[]>([]);
+
+  // Function to load audio data from AsyncStorage
+  const loadAudioData = async () => {
+    try {
+      const savedAudios = await AsyncStorage.getItem("savedAudios");
+      if (savedAudios) {
+        const parsedAudios: AudioItem[] = JSON.parse(savedAudios);
+        setAudioData(parsedAudios);
+      } else {
+        setAudioData([]); // If no data is found, set an empty array
+      }
+    } catch (error) {
+      console.error("Error loading audio data from AsyncStorage:", error);
+      setAudioData([]); // Reset in case of error
+    }
+  };
+
+  useEffect(() => {
+    loadAudioData(); // Load audio data when the component mounts
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -23,12 +42,12 @@ const AudioList = () => {
           data={audioData}
           renderItem={({ item }) => (
             <AudioListItem
-              name={item.name}
+              uri={item.uri} // Show URI or a more readable name, as you prefer
               duration={item.duration}
-              size={item.size}
+              size={item.size} // If you store the file size, else adjust accordingly
             />
           )}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => index.toString()} // Use index as the key
         />
       )}
     </View>
@@ -39,7 +58,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 10,
-    fontSize:10
   },
 });
 

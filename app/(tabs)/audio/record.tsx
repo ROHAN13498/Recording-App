@@ -1,18 +1,33 @@
-import { View, Text, StyleSheet } from "react-native";
-import React from "react";
+import React, { useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import AudioWave from "@/components/AudioWave";
+import Recoding from "@/components/Recoding";
 
 const Record = () => {
+  const [isRecording, setIsRecording] = useState<boolean>(false);
+
+  const handleToggleRecording = () => {
+    setIsRecording(!isRecording);
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.outerCircle}>
-        <View style={styles.innerCircle}>
-          <FontAwesome5 name="microphone" size={24} color="black" />
-        </View>
-      </View>
-      <Text style={styles.text}>
-        Click on the Recording Button to Start Recording
-      </Text>
+      {!isRecording ? (
+        <TouchableOpacity
+          style={styles.startButton}
+          onPress={handleToggleRecording}
+        >
+          <View style={styles.outerCircle}>
+            <View style={styles.innerCircle}>
+              <FontAwesome5 name="microphone" size={24} color="black" />
+            </View>
+          </View>
+          <Text style={styles.text}>Press the button to start recording</Text>
+        </TouchableOpacity>
+      ) : (
+        <Recoding/>
+      )}
     </View>
   );
 };
@@ -22,8 +37,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    flexDirection: "column",
-    gap: 20,
+    paddingHorizontal: 20,
   },
   outerCircle: {
     width: 80,
@@ -32,7 +46,6 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     justifyContent: "center",
     alignItems: "center",
-    position: "relative",
   },
   innerCircle: {
     width: 60,
@@ -42,9 +55,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  text: {
-    fontSize:20
+  startButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 10,
   },
+  text: {
+    fontSize: 20,
+    textAlign: "center",
+    marginTop: 20,
+    color: "#f5f5dc", // Cream color for text
+  },
+  
 });
 
 export default Record;

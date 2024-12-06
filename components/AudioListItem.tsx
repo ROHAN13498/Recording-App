@@ -1,15 +1,26 @@
-import { View, Text, StyleSheet } from "react-native";
 import React from "react";
+import { View, Text, StyleSheet } from "react-native";
 import FontAwesome from "@expo/vector-icons/SimpleLineIcons";
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { useRouter } from "expo-router";
 
 interface AudioListItemProps {
-  name: string;
+  uri: string;
   duration: string;
   size: number;
 }
 
-const AudioListItem = ({ name, duration, size }: AudioListItemProps) => {
+const AudioListItem = ({ uri, duration, size }: AudioListItemProps) => {
+  const router = useRouter();
+
+  const handlePlayButtonPress = () => {
+    // Navigate to the preview screen with the uri as a parameter
+    router.push({
+      pathname: "/audio/preview",
+      params: { uri }, // Pass the URI of the audio file
+    });
+  };
+
   return (
     <View style={styles.audioListItemContainer}>
       <View style={styles.iconTextContainer}>
@@ -17,14 +28,17 @@ const AudioListItem = ({ name, duration, size }: AudioListItemProps) => {
           <FontAwesome name="microphone" size={30} color="#16D7F9" />
         </View>
         <View style={styles.textContainer}>
-          <Text>{name}</Text>
+          {/* Truncate long names with ellipsis */}
+          <Text style={styles.audioName} numberOfLines={1} ellipsizeMode="tail">
+            {uri}
+          </Text> 
           <Text>
             {duration} --- {size} MB
           </Text>
         </View>
       </View>
       <View style={styles.playButtonContainer}>
-        <FontAwesome5 name="play" size={28} color="#9F9F9F" />
+        <FontAwesome5 name="play" size={28} color="#9F9F9F" onPress={handlePlayButtonPress} />
       </View>
     </View>
   );
@@ -35,7 +49,8 @@ const styles = StyleSheet.create({
     height: 70, 
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 10
+    paddingHorizontal: 10,
+    marginBottom: 10,  // Adds margin between items
   },
   iconTextContainer: {
     flexDirection: "row",
@@ -43,6 +58,10 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     marginLeft: 10, 
+  },
+  audioName: {
+    fontWeight: "bold", 
+    width: 150,  // Restrict the width for truncation
   },
   iconBox: {
     backgroundColor: "lightgrey", 
