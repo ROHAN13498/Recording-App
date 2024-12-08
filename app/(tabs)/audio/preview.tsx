@@ -6,42 +6,36 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Preview = () => {
   const params = useLocalSearchParams();
-  const uri = Array.isArray(params.uri) ? params.uri[0] : params.uri; // Ensure `uri` is a string
+  const uri = Array.isArray(params.uri) ? params.uri[0] : params.uri;
   const [sound, setSound] = useState<Audio.Sound | null>(null);
-  const [duration, setDuration] = useState<number | null>(null); // To store the duration of the audio
+  const [duration, setDuration] = useState<number | null>(null);
 
-  // Function to play audio
   const playAudio = async () => {
     if (uri) {
       try {
         const { sound } = await Audio.Sound.createAsync({ uri });
         setSound(sound);
         await sound.playAsync();
-        console.log("Playing audio...");
 
-        // Get the audio duration
         const status = await sound.getStatusAsync();
-        setDuration(status.durationMillis / 1000); // Convert from milliseconds to seconds
+        setDuration(status.durationMillis / 1000);
       } catch (error) {
         console.error("Error playing audio:", error);
       }
     }
   };
 
-  // Function to stop audio
   const stopAudio = async () => {
     if (sound) {
       try {
         await sound.stopAsync();
         setSound(null);
-        console.log("Audio stopped.");
       } catch (error) {
         console.error("Error stopping audio:", error);
       }
     }
   };
 
-  // Function to save audio details in AsyncStorage
   const saveAudio = async () => {
     if (uri && duration) {
       const audioDetails = {
@@ -51,7 +45,6 @@ const Preview = () => {
       };
 
       try {
-        // Store audio details in AsyncStorage
         const savedAudios = await AsyncStorage.getItem("savedAudios");
         const audios = savedAudios ? JSON.parse(savedAudios) : [];
         audios.push(audioDetails);
@@ -64,7 +57,6 @@ const Preview = () => {
     }
   };
 
-  // Cleanup the sound when the component unmounts
   useEffect(() => {
     return () => {
       if (sound) {

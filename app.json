@@ -10,15 +10,23 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "infoPlist":{
-        "UIBackgroundModes":["audio"]
-      }
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "audio",
+          "audio"
+        ]
+      },
+      "bundleIdentifier": "com.anonymous.assignment"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -36,10 +44,12 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      ["expo-audio",
-      {
-        "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone."
-      }]
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

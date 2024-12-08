@@ -1,81 +1,117 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { Audio } from "expo-av";
+import * as FileSystem from "expo-file-system";
 import AudioWave from "./AudioWave";
 import { router } from "expo-router";
 
-const Recoding = () => {
+const Recording = () => {
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [permissionStatus, setPermissionStatus] = useState<string | null>(null);
 
-  useEffect(() => {
-    let activeRecording: Audio.Recording | null = null;
+  const requestPermissions = async () => {
+    try {
+      const { status } = await Audio.requestPermissionsAsync();
+      setPermissionStatus(status);
 
-    const configureAudio = async () => {
-      try {
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: true,
-          playsInSilentModeIOS: true,
-        });
-        console.log("Audio mode configured successfully");
-      } catch (error) {
-        console.error("Failed to configure audio mode:", error);
+      if (status !== "granted") {
+        Alert.alert(
+          "Permissions Required",
+          "We need microphone permissions to record audio.",
+          [{ text: "OK" }]
+        );
+        return false;
       }
-    };
 
-    const startRecording = async () => {
-      if (recording) {
-        console.log("A recording is already active.");
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+        shouldDuckAndroid: true,
+      });
+
+      return true;
+    } catch (error) {
+      console.error("Permission request failed:", error);
+      Alert.alert("Error", "Could not request audio permissions");
+      return false;
+    }
+  };
+
+  const startRecording = async () => {
+    if (recording) {
+      console.log("Recording already in progress");
+      return;
+    }
+
+    const hasPermission = await requestPermissions();
+    if (!hasPermission) return;
+
+    try {
+      const newRecording = new Audio.Recording();
+      await newRecording.prepareToRecordAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
+      await newRecording.startAsync();
+
+      setRecording(newRecording);
+      console.log("Recording started");
+    } catch (error) {
+      console.error("Failed to start recording:", error);
+      Alert.alert("Recording Error", "Could not start audio recording");
+    }
+  };
+
+  const stopRecording = async () => {
+    if (!recording) {
+      console.log("No active recording");
+      return;
+    }
+
+    try {
+      await recording.stopAndUnloadAsync();
+      const uri = recording.getURI(); // Get the temporary URI
+      setRecording(null);
+
+      if (uri) {
+        // Move the file to a more accessible location
+        const fileName = uri.split("/").pop(); // Extract the file name
+        const documentDirectory = FileSystem.documentDirectory;
+      if (!documentDirectory) {
+        console.error("FileSystem.documentDirectory is null");
+        Alert.alert("Storage Error", "Unable to access device storage");
         return;
       }
+        const newUri = documentDirectory + fileName; 
 
-      const { status } = await Audio.requestPermissionsAsync();
-      if (status === "granted") {
-        try {
-          const { recording: newRecording } = await Audio.Recording.createAsync(
-            Audio.RecordingOptionsPresets.HIGH_QUALITY
-          );
-          activeRecording = newRecording;
-          setRecording(newRecording);
-          await newRecording.startAsync();
-          console.log("Recording started...");
-        } catch (error) {
-          console.error("Failed to start recording:", error);
-        }
-      } else {
-        console.log("Permission to access microphone was denied");
+        await FileSystem.moveAsync({
+          from: uri,
+          to: newUri,
+        });
+
+        console.log("File saved to:", newUri);
+
+        router.push({
+          pathname: "/audio/preview",
+          params: { uri: newUri },
+        });
       }
-    };
+    } catch (error) {
+      console.error("Failed to stop recording:", error);
+      Alert.alert("Recording Error", "Could not stop or save audio recording");
+    }
+  };
 
-    configureAudio().then(startRecording);
+  // Automatically start recording when component mounts
+  useEffect(() => {
+    startRecording();
 
     return () => {
-      if (activeRecording) {
-        activeRecording.stopAndUnloadAsync().then(() => {
-          console.log("Recording stopped during cleanup.");
-        });
+      if (recording) {
+        recording.stopAndUnloadAsync();
       }
     };
   }, []);
-
-  const stopRecording = async () => {
-    if (recording) {
-      try {
-        await recording.stopAndUnloadAsync();
-        const uri = recording.getURI();
-        console.log("Recording URL:", uri); 
-        setRecording(null);
-        router.push({
-            pathname: "/audio/preview",
-            params: { uri },
-        });
-      } catch (error) {
-        console.error("Failed to stop recording:", error);
-      }
-    } else {
-      console.log("No recording to stop.");
-    }
-  };
 
   return (
     <View style={styles.container}>
@@ -113,4 +149,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Recoding;
+export default Recording;
