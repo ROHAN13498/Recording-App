@@ -70,12 +70,11 @@ const Recording = () => {
 
     try {
       await recording.stopAndUnloadAsync();
-      const uri = recording.getURI(); // Get the temporary URI
+      const uri = recording.getURI();
       setRecording(null);
 
       if (uri) {
-        // Move the file to a more accessible location
-        const fileName = uri.split("/").pop(); // Extract the file name
+        const fileName = uri.split("/").pop(); 
         const documentDirectory = FileSystem.documentDirectory;
       if (!documentDirectory) {
         console.error("FileSystem.documentDirectory is null");
@@ -93,7 +92,7 @@ const Recording = () => {
 
         router.push({
           pathname: "/audio/preview",
-          params: { uri: newUri },
+          params: { uri: newUri ,showSaveButton:"true"},
         });
       }
     } catch (error) {

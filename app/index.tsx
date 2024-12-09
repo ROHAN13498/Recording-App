@@ -1,30 +1,29 @@
-import { View, Text, Button, StyleSheet } from 'react-native';
-import React from 'react';
-import { router } from 'expo-router';
+import AntDesign from "@expo/vector-icons/AntDesign";
+import { router } from "expo-router";
+import React from "react";
+import { Pressable, StyleSheet, Text } from "react-native";
 
 const Index = () => {
   return (
-    <View style={styles.container}>
+    <Pressable style={styles.container}>
       <Text style={styles.title}>Welcome to Eksaq</Text>
-      <Button
-        title="->"
-        onPress={() => router.push("/audio")}
-        color="darkblue" 
-      />
-    </View>
+      <Text onPress={() => router.push("/audio")}>
+        <AntDesign name="arrowright" size={24} color="black" />
+      </Text>
+    </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 20,
   },
 });

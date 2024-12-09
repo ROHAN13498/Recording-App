@@ -7,17 +7,16 @@ import { useRouter } from "expo-router";
 interface AudioListItemProps {
   uri: string;
   duration: string;
-  size: number;
+  name: string;
 }
 
-const AudioListItem = ({ uri, duration, size }: AudioListItemProps) => {
+const AudioListItem = ({ uri, duration, name }: AudioListItemProps) => {
   const router = useRouter();
 
   const handlePlayButtonPress = () => {
-    // Navigate to the preview screen with the uri as a parameter
     router.push({
       pathname: "/audio/preview",
-      params: { uri }, // Pass the URI of the audio file
+      params: { uri,showSaveButton:"false" }, 
     });
   };
 
@@ -30,10 +29,10 @@ const AudioListItem = ({ uri, duration, size }: AudioListItemProps) => {
         <View style={styles.textContainer}>
           {/* Truncate long names with ellipsis */}
           <Text style={styles.audioName} numberOfLines={1} ellipsizeMode="tail">
-            {uri}
+            {name}
           </Text> 
           <Text>
-            {duration} --- {size} MB
+            {duration}
           </Text>
         </View>
       </View>

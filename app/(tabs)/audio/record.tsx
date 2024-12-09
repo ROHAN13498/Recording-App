@@ -1,10 +1,9 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import AudioWave from "@/components/AudioWave";
 import Recoding from "@/components/Recoding";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import React, { useState } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-  export default function record() {
+export default function record() {
   const [isRecording, setIsRecording] = useState<boolean>(false);
 
   const handleToggleRecording = () => {
@@ -38,6 +37,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 20,
+    backgroundColor: "#FFFFFF",
   },
   outerCircle: {
     width: 80,
@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     textAlign: "center",
     marginTop: 20,
-    color: "#f5f5dc", // Cream color for text
+    color: "black", 
   },
   
 });

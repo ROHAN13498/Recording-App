@@ -1,8 +1,9 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, Pressable, FlatList, TouchableOpacity, Image } from "react-native";
+import { ResizeMode, Video } from "expo-av";
 import * as DocumentPicker from "expo-document-picker";
-import { Video, ResizeMode } from "expo-av";
+import React, { useState } from "react";
+import { FlatList, Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Pdf from "react-native-pdf";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface Document {
   name: string;
@@ -10,22 +11,20 @@ interface Document {
   type: 'pdf' | 'image' | 'video';
 }
 
-const Index = () => {
+export default function index(){
   const [documents, setDocuments] = useState<Document[]>([]);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
-
   const pickDocument = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: [
-          "application/pdf",  // PDF files
-          "image/*",          // All image types
-          "video/*"           // All video types
+          "application/pdf",  
+          "image/*",          
+          "video/*"           
         ],
         copyToCacheDirectory: true,
       });
 
-      // Check if the result is not canceled and assets array exists
       if (!result.canceled && result.assets && result.assets[0]) {
         const { uri, name, mimeType } = result.assets[0];
         
@@ -35,6 +34,14 @@ const Index = () => {
         } else if (mimeType?.startsWith('video/')) {
           docType = 'video';
         }
+
+        const newDocument={
+          name: name ?? "Untitled Document", 
+          uri: uri ?? "",
+          type: docType
+        }
+
+
 
         setDocuments((prevDocs) => [
           ...prevDocs,
@@ -88,9 +95,6 @@ const Index = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.libraryContainer}>
-        <Text style={styles.library}>Your Documents</Text>
-      </View>
       
       <View style={styles.audioLibraryContainer}>
         <Text style={styles.audioLibrary}>Documents</Text>
@@ -132,19 +136,9 @@ const Index = () => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 50,
     backgroundColor: "white",
     flex: 1,
     padding: 10,
-  },
-  libraryContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-    height: "10%",
-  },
-  library: {
-    padding: 0,
-    fontSize: 20,
   },
   audioLibraryContainer: {
     flexDirection: "row",
@@ -208,4 +202,3 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Index;

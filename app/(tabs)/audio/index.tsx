@@ -1,15 +1,11 @@
-import { View, Text, StyleSheet, Pressable } from "react-native";
-import React from "react";
 import AudioList from "@/components/AudioList";
 import { router } from "expo-router";
+import React from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function Index() {
   return (
     <View style={styles.container}>
-      <View style={styles.libraryContainer}>
-        <Text style={styles.library}>Your Library</Text>
-      </View>
-
       <View style={styles.audioLibraryContainer}>
         <Text style={styles.audioLibrary}>Audio Library</Text>
         <Pressable style={styles.addButtoncontainer}>
@@ -24,15 +20,9 @@ export default function Index() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 50,
     backgroundColor: "white",
     flex: 1,
     padding: 10,
-  },
-  libraryContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-    height: "10%",
   },
   library: {
     padding: 0,

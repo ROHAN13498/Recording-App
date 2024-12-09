@@ -3,34 +3,33 @@ import { View, FlatList, StyleSheet, Text } from "react-native";
 import AudioListItem from "./AudioListItem";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Define the type for the audio data
 interface AudioItem {
   uri: string;
   duration: string;
-  size: number;
+  name: string;
 }
 
 const AudioList = () => {
   const [audioData, setAudioData] = useState<AudioItem[]>([]);
 
-  // Function to load audio data from AsyncStorage
   const loadAudioData = async () => {
     try {
       const savedAudios = await AsyncStorage.getItem("savedAudios");
+     
       if (savedAudios) {
         const parsedAudios: AudioItem[] = JSON.parse(savedAudios);
         setAudioData(parsedAudios);
       } else {
-        setAudioData([]); // If no data is found, set an empty array
+        setAudioData([]);
       }
     } catch (error) {
       console.error("Error loading audio data from AsyncStorage:", error);
-      setAudioData([]); // Reset in case of error
+      setAudioData([]); 
     }
   };
 
   useEffect(() => {
-    loadAudioData(); // Load audio data when the component mounts
+    loadAudioData(); 
   }, []);
 
   return (
@@ -42,12 +41,12 @@ const AudioList = () => {
           data={audioData}
           renderItem={({ item }) => (
             <AudioListItem
-              uri={item.uri} // Show URI or a more readable name, as you prefer
+              uri={item.uri} 
               duration={item.duration}
-              size={item.size} // If you store the file size, else adjust accordingly
+              name={item.name} 
             />
           )}
-          keyExtractor={(item, index) => index.toString()} // Use index as the key
+          keyExtractor={(item, index) => index.toString()}
         />
       )}
     </View>
