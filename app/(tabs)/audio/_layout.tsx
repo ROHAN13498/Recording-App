@@ -7,6 +7,7 @@ const _layout = () => {
     <Stack>
         <Stack.Screen name='index' options={{headerShown:false}}></Stack.Screen>
         <Stack.Screen name="record"  />
+        <Stack.Screen name="preview"/>
     </Stack>
   )
 }

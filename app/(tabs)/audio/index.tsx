@@ -3,7 +3,7 @@ import React from "react";
 import AudioList from "@/components/AudioList";
 import { router } from "expo-router";
 
-const Index = () => {
+export default function Index() {
   return (
     <View style={styles.container}>
       <View style={styles.libraryContainer}>
@@ -61,4 +61,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Index;
+

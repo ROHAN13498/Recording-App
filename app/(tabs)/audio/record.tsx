@@ -4,7 +4,7 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import AudioWave from "@/components/AudioWave";
 import Recoding from "@/components/Recoding";
 
-const Record = () => {
+  export default function record() {
   const [isRecording, setIsRecording] = useState<boolean>(false);
 
   const handleToggleRecording = () => {
@@ -69,4 +69,4 @@ const styles = StyleSheet.create({
   
 });
 
-export default Record;
+

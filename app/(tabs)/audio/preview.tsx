@@ -4,7 +4,7 @@ import { useLocalSearchParams } from "expo-router";
 import { Audio } from "expo-av";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const Preview = () => {
+export default function preview() {
   const params = useLocalSearchParams();
   const uri = Array.isArray(params.uri) ? params.uri[0] : params.uri;
   const [sound, setSound] = useState<Audio.Sound | null>(null);
@@ -105,4 +105,3 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Preview;
