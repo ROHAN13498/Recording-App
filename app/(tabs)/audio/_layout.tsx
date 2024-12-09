@@ -1,6 +1,6 @@
 import BackButton from "@/components/BackButton";
-import { Stack } from "expo-router";
-
+import { router, Stack } from "expo-router";
+import AntDesign from '@expo/vector-icons/AntDesign';
 const _layout = () => {
   return (
     <Stack>
@@ -12,6 +12,7 @@ const _layout = () => {
             backgroundColor: "white",
           },
           headerShadowVisible: false,
+          headerLeft:()=>{return(<></>)}
         }}
       />
       <Stack.Screen
@@ -29,11 +30,12 @@ const _layout = () => {
         name="preview"
         options={{
           headerTitle: "Preview Audio",
-          headerLeft: BackButton,
+          headerLeft: ()=>{return(<></>)},
           headerStyle: {
             backgroundColor: "white",
           },
           headerShadowVisible: false,
+          headerRight:()=>{return (<AntDesign onPress={()=>router.push("/audio")} name="close" size={24} color="black" />)}
         }}
       />
     </Stack>

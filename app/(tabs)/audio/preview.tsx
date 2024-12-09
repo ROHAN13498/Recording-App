@@ -103,13 +103,13 @@ export default function Preview() {
         'savedAudios', 
         JSON.stringify([...savedAudios, newAudio])
       );
-  
+
       Alert.alert('Success', 'Audio saved successfully!');
     } catch (error) {
       console.error('Error saving audio:', error);
       Alert.alert('Error', 'Failed to save the audio.');
     } finally {
-      router.push("/audio");
+      router.replace("/audio");
     }
   };
   

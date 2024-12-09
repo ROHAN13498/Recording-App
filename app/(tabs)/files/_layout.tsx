@@ -1,3 +1,4 @@
+import BackButton from "@/components/BackButton";
 import { Stack } from "expo-router";
 
 const _layout = () => {
@@ -13,7 +14,18 @@ const _layout = () => {
           headerShadowVisible: false,
         }}
       />
-    </Stack> 
+      <Stack.Screen
+        name="preview"
+        options={{
+          headerTitle: "Your Documents",
+          headerStyle: {
+            backgroundColor: "white",
+          },
+          headerShadowVisible: false,
+          headerLeft:BackButton
+        }}
+      />
+    </Stack>
   );
 };
 
