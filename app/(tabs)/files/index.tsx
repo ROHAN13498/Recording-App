@@ -1,48 +1,48 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  FlatList,
-  TouchableOpacity,
-} from "react-native";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, Pressable, FlatList, TouchableOpacity, Image } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
-import { Image } from "expo-image"; // Correct import for Image
-import { Video } from "expo-av"; // Expo AV for rendering videos
+import { Video, ResizeMode } from "expo-av";
 import Pdf from "react-native-pdf";
-import * as FileSystem from "expo-file-system"; // Import expo-file-system to read text files
+
+interface Document {
+  name: string;
+  uri: string;
+  type: 'pdf' | 'image' | 'video';
+}
 
 const Index = () => {
-  const [documents, setDocuments] = useState<
-    { name: string; uri: string; type: string }[]
-  >([]);
-  const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
-  const [selectedDocumentType, setSelectedDocumentType] = useState<
-    string | null
-  >(null);
-  const [textContent, setTextContent] = useState<string | null>(null); // Store the text content
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
 
   const pickDocument = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: "*/*", // Allow all types (PDF, images, videos, etc.)
-        copyToCacheDirectory: true, // Ensures the file is accessible
+        type: [
+          "application/pdf",  // PDF files
+          "image/*",          // All image types
+          "video/*"           // All video types
+        ],
+        copyToCacheDirectory: true,
       });
 
-      if (!result.canceled) {
+      // Check if the result is not canceled and assets array exists
+      if (!result.canceled && result.assets && result.assets[0]) {
         const { uri, name, mimeType } = result.assets[0];
-
-        // Determine the document type based on mimeType
-        const fileType = mimeType?.split("/")[0] || "unknown"; // PDF, image, video, text
+        
+        let docType: Document['type'] = 'pdf';
+        if (mimeType?.startsWith('image/')) {
+          docType = 'image';
+        } else if (mimeType?.startsWith('video/')) {
+          docType = 'video';
+        }
 
         setDocuments((prevDocs) => [
           ...prevDocs,
-          {
-            name: name || "Untitled Document",
-            uri: uri || "",
-            type: fileType,
-          },
+          { 
+            name: name ?? "Untitled Document", 
+            uri: uri ?? "",
+            type: docType
+          }
         ]);
       }
     } catch (err) {
@@ -50,61 +50,40 @@ const Index = () => {
     }
   };
 
-  const renderContent = () => {
-    if (selectedDocument && selectedDocumentType) {
-      if (selectedDocumentType === "application/pdf") {
+  const renderSelectedDocument = () => {
+    if (!selectedDocument) return null;
+
+    switch (selectedDocument.type) {
+      case 'pdf':
         return (
           <Pdf
-            source={{ uri: selectedDocument }}
+            source={{ uri: selectedDocument.uri }}
             style={styles.pdf}
             onError={(error) => {
               console.error(error);
             }}
           />
         );
-      }
-
-      if (selectedDocumentType.startsWith("image")) {
+      
+      case 'image':
         return (
-          <Image source={{ uri: selectedDocument }} style={styles.image} />
-        );
-      }
-
-      if (selectedDocumentType.startsWith("video")) {
-        return (
-          <Video
-            source={{ uri: selectedDocument }}
-            style={styles.video}
-            useNativeControls
-            onError={(error) => console.log(error)}
+          <Image
+            source={{ uri: selectedDocument.uri }}
+            style={styles.image}
+            resizeMode="contain"
           />
         );
-      }
-
-      if (selectedDocumentType === "text/plain") {
-        // Log URI to verify the path
-        console.log("Selected document URI:", selectedDocument);
-
-        // Read the text file content when it's selected
-        if (selectedDocument) {
-          FileSystem.readAsStringAsync(selectedDocument)
-            .then((content) => {
-              setTextContent(content); // Set the content to display
-            })
-            .catch((error) => {
-              console.error("Error reading text file:", error);
-            });
-        }
-
+      
+      case 'video':
         return (
-          <View style={styles.textContainer}>
-            <Text style={styles.text}>{textContent}</Text>
-          </View>
+          <Video
+            source={{ uri: selectedDocument.uri }}
+            style={styles.video}
+            useNativeControls
+            resizeMode={ResizeMode.CONTAIN}
+          />
         );
-      }
     }
-
-    return null;
   };
 
   return (
@@ -112,7 +91,7 @@ const Index = () => {
       <View style={styles.libraryContainer}>
         <Text style={styles.library}>Your Documents</Text>
       </View>
-
+      
       <View style={styles.audioLibraryContainer}>
         <Text style={styles.audioLibrary}>Documents</Text>
         <Pressable style={styles.addButtonContainer} onPress={pickDocument}>
@@ -124,16 +103,11 @@ const Index = () => {
         <View style={{ flex: 1 }}>
           <Pressable
             style={styles.backButton}
-            onPress={() => {
-              setSelectedDocument(null);
-              setSelectedDocumentType(null);
-              setTextContent(null); // Clear the text content when going back
-            }}
+            onPress={() => setSelectedDocument(null)}
           >
             <Text style={styles.backText}>Back</Text>
           </Pressable>
-
-          {renderContent()}
+          {renderSelectedDocument()}
         </View>
       ) : (
         <FlatList
@@ -142,12 +116,12 @@ const Index = () => {
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.documentItem}
-              onPress={() => {
-                setSelectedDocument(item.uri);
-                setSelectedDocumentType(item.type);
-              }}
+              onPress={() => setSelectedDocument(item)}
             >
               <Text style={styles.documentName}>{item.name}</Text>
+              <Text style={styles.documentType}>
+                {item.type.toUpperCase()}
+              </Text>
             </TouchableOpacity>
           )}
         />
@@ -208,7 +182,17 @@ const styles = StyleSheet.create({
     flex: 1,
     margin: 10,
   },
+  image: {
+    flex: 1,
+    margin: 10,
+  },
+  video: {
+    flex: 1,
+    margin: 10,
+  },
   documentItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     padding: 15,
     marginVertical: 5,
     backgroundColor: "#f0f0f0",
@@ -216,21 +200,11 @@ const styles = StyleSheet.create({
   },
   documentName: {
     fontSize: 16,
-  },
-  image: {
     flex: 1,
-    width: "100%",
-    height: "100%",
   },
-  video: {
-    width: "100%",
-    height: 250,
-  },
-  textContainer: {
-    padding: 10,
-  },
-  text: {
-    fontSize: 16,
+  documentType: {
+    fontSize: 12,
+    color: '#666',
   },
 });
 
