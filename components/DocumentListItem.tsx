@@ -1,15 +1,33 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import React from "react";
-import Ionicons from "@expo/vector-icons/Ionicons";
+import { router } from "expo-router";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { Document } from "@/app/(tabs)/files";
 
-const DocumentListItem = ({ name }: { name: string }) => {
+const DocumentListItem = ({ item }: { item: Document }) => {
   return (
-    <View style={styles.container}>
+    <Pressable
+      style={styles.container}
+      onPress={() =>
+        router.push({
+          pathname: "/files/preview",
+          params: { documentId: item.id },
+        })
+      }
+    >
       <View style={styles.iconContainer}>
-        <Ionicons name="document-text" size={32} color="#9E9E9E" /> 
+        {item.type === "pdf" && (
+          <FontAwesome name="file-pdf-o" size={20} color="#E57373" />
+        )}
+        {item.type === "image" && (
+          <FontAwesome name="file-image-o" size={20} color="#64B5F6" />
+        )}
+        {item.type === "video" && (
+          <FontAwesome name="file-video-o" size={20} color="#81C784" />
+        )}
       </View>
-      <Text style={styles.text}>{name}</Text>
-    </View>
+      <Text style={styles.text}>{item.name}</Text>
+    </Pressable>
   );
 };
 
@@ -21,9 +39,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   iconContainer: {
-    marginRight: 15,
+    width: 40, 
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F0F0F0", 
     borderRadius: 8,
-    padding: 8,
+    marginRight: 15,
   },
   text: {
     fontSize: 22,

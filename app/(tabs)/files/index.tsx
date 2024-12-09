@@ -1,19 +1,13 @@
-import { ResizeMode, Video } from "expo-av";
+import DocumentList from "@/components/DocumentList";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as DocumentPicker from "expo-document-picker";
 import React, { useEffect, useState } from "react";
 import {
-  FlatList,
-  Image,
   Pressable,
   StyleSheet,
   Text,
-  TouchableOpacity,
-  View,
+  View
 } from "react-native";
-import Pdf from "react-native-pdf";
-import * as FileSystem from 'expo-file-system';
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
 
 export interface Document {
   id:number,
@@ -35,16 +29,6 @@ const pickDocument = async () => {
 
     if (!result.canceled && result.assets && result.assets[0]) {
       const { uri, name, mimeType } = result.assets[0];
-
-      // Copy file to a known directory
-      // const fileUri = uri;
-      // const newUri = FileSystem.documentDirectory + name;
-
-      // await FileSystem.copyAsync({
-      //   from: fileUri,
-      //   to: newUri,
-      // });
-
       let docType: Document["type"] = "pdf";
       if (mimeType?.startsWith("image/")) {
         docType = "image";
@@ -92,25 +76,7 @@ const pickDocument = async () => {
           <Text style={styles.addButton}>+</Text>
         </Pressable>
       </View>
-
-      <FlatList
-        data={documents}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.documentItem}
-            onPress={() =>
-              router.push({
-                pathname: "/files/preview",
-                params: { documentId:item.id}
-              })
-            }
-          >
-            <Text style={styles.documentName}>{item.name}</Text>
-            <Text style={styles.documentType}>{item.type.toUpperCase()}</Text>
-          </TouchableOpacity>
-        )}
-      />
+      <DocumentList files={documents}/>
     </View>
   );
 }

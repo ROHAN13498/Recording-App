@@ -1,22 +1,15 @@
 import { View, FlatList, StyleSheet } from 'react-native';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import DocumentListItem from './DocumentListItem';
+import { Document } from '@/app/(tabs)/files';
 
-const DocumentList = () => {
-  const dummyData = [
-    { id: '1', name: 'Document 1' },
-    { id: '2', name: 'Document 2' },
-    { id: '3', name: 'Document 3' },
-    { id: '4', name: 'Document 4' },
-    { id: '5', name: 'Document 5' },
-  ];
-
+const DocumentList = ({files}:{files:Document[]}) => {
   return (
     <View style={styles.container}>
       <FlatList
-        data={dummyData}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <DocumentListItem name={item.name} />}
+        data={files}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => <DocumentListItem item={item} />}
       />
     </View>
   );
