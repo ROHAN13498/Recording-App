@@ -1,101 +1,91 @@
 import { ResizeMode, Video } from "expo-av";
 import * as DocumentPicker from "expo-document-picker";
-import React, { useState } from "react";
-import { FlatList, Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  FlatList,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import Pdf from "react-native-pdf";
+import * as FileSystem from 'expo-file-system';
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
 
-interface Document {
+export interface Document {
+  id:number,
   name: string;
   uri: string;
-  type: 'pdf' | 'image' | 'video';
+  type: "pdf" | "image" | "video";
 }
 
-export default function index(){
+export default function index() {
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
-  const pickDocument = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: [
-          "application/pdf",  
-          "image/*",          
-          "video/*"           
-        ],
-        copyToCacheDirectory: true,
-      });
 
-      if (!result.canceled && result.assets && result.assets[0]) {
-        const { uri, name, mimeType } = result.assets[0];
-        
-        let docType: Document['type'] = 'pdf';
-        if (mimeType?.startsWith('image/')) {
-          docType = 'image';
-        } else if (mimeType?.startsWith('video/')) {
-          docType = 'video';
-        }
+const pickDocument = async () => {
+  try {
+    
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ["application/pdf", "image/*", "video/*"],
+      copyToCacheDirectory: true,
+    });
 
-        const newDocument={
-          name: name ?? "Untitled Document", 
-          uri: uri ?? "",
-          type: docType
-        }
+    if (!result.canceled && result.assets && result.assets[0]) {
+      const { uri, name, mimeType } = result.assets[0];
 
+      // Copy file to a known directory
+      // const fileUri = uri;
+      // const newUri = FileSystem.documentDirectory + name;
 
+      // await FileSystem.copyAsync({
+      //   from: fileUri,
+      //   to: newUri,
+      // });
 
-        setDocuments((prevDocs) => [
-          ...prevDocs,
-          { 
-            name: name ?? "Untitled Document", 
-            uri: uri ?? "",
-            type: docType
-          }
-        ]);
+      let docType: Document["type"] = "pdf";
+      if (mimeType?.startsWith("image/")) {
+        docType = "image";
+      } else if (mimeType?.startsWith("video/")) {
+        docType = "video";
       }
-    } catch (err) {
-      console.error("Error picking document:", err);
-    }
-  };
 
-  const renderSelectedDocument = () => {
-    if (!selectedDocument) return null;
-
-    switch (selectedDocument.type) {
-      case 'pdf':
-        return (
-          <Pdf
-            source={{ uri: selectedDocument.uri }}
-            style={styles.pdf}
-            onError={(error) => {
-              console.error(error);
-            }}
-          />
-        );
-      
-      case 'image':
-        return (
-          <Image
-            source={{ uri: selectedDocument.uri }}
-            style={styles.image}
-            resizeMode="contain"
-          />
-        );
-      
-      case 'video':
-        return (
-          <Video
-            source={{ uri: selectedDocument.uri }}
-            style={styles.video}
-            useNativeControls
-            resizeMode={ResizeMode.CONTAIN}
-          />
-        );
+      const savedDocuments = JSON.parse(
+        (await AsyncStorage.getItem("documents")) || "[]"
+      ) as Document[];
+      const newDocument = {
+        name: name ?? "Untitled Document",
+        uri: uri ?? "",
+        type: docType,
+        id: savedDocuments.length
+      };
+      const newSavedDocuments = [...savedDocuments, newDocument];
+      await AsyncStorage.setItem(
+        "documents",
+        JSON.stringify(newSavedDocuments)
+      );
+      setDocuments(newSavedDocuments)
     }
-  };
+  } catch (err) {
+    console.error("Error picking document:", err);
+  }
+};
+
+
+  useEffect(() => {
+    const getDocuments = async () => {
+      const savedDocuments = JSON.parse(
+        (await AsyncStorage.getItem("documents")) || "[]"
+      ) as Document[];
+      setDocuments(savedDocuments);
+    };
+    getDocuments();
+  }, []);
 
   return (
     <View style={styles.container}>
-      
       <View style={styles.audioLibraryContainer}>
         <Text style={styles.audioLibrary}>Documents</Text>
         <Pressable style={styles.addButtonContainer} onPress={pickDocument}>
@@ -103,36 +93,27 @@ export default function index(){
         </Pressable>
       </View>
 
-      {selectedDocument ? (
-        <View style={{ flex: 1 }}>
-          <Pressable
-            style={styles.backButton}
-            onPress={() => setSelectedDocument(null)}
+      <FlatList
+        data={documents}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.documentItem}
+            onPress={() =>
+              router.push({
+                pathname: "/files/preview",
+                params: { documentId:item.id}
+              })
+            }
           >
-            <Text style={styles.backText}>Back</Text>
-          </Pressable>
-          {renderSelectedDocument()}
-        </View>
-      ) : (
-        <FlatList
-          data={documents}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.documentItem}
-              onPress={() => setSelectedDocument(item)}
-            >
-              <Text style={styles.documentName}>{item.name}</Text>
-              <Text style={styles.documentType}>
-                {item.type.toUpperCase()}
-              </Text>
-            </TouchableOpacity>
-          )}
-        />
-      )}
+            <Text style={styles.documentName}>{item.name}</Text>
+            <Text style={styles.documentType}>{item.type.toUpperCase()}</Text>
+          </TouchableOpacity>
+        )}
+      />
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -185,8 +166,8 @@ const styles = StyleSheet.create({
     margin: 10,
   },
   documentItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     padding: 15,
     marginVertical: 5,
     backgroundColor: "#f0f0f0",
@@ -198,7 +179,6 @@ const styles = StyleSheet.create({
   },
   documentType: {
     fontSize: 12,
-    color: '#666',
+    color: "#666",
   },
 });
-
