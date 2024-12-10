@@ -1,70 +1,65 @@
 import DocumentList from "@/components/DocumentList";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { supabase } from "@/utils/supabase";
+import { FileObject } from "@/utils/types";
 import * as DocumentPicker from "expo-document-picker";
 import React, { useEffect, useState } from "react";
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View
-} from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
-export interface Document {
-  id:number,
-  name: string;
-  uri: string;
-  type: "pdf" | "image" | "video";
-}
+export default function Index() {
+  const [documents, setDocuments] = useState<FileObject[] | null>([]);
 
-export default function index() {
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const pickDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ["application/pdf", "image/*", "video/*"],
+        copyToCacheDirectory: true,
+        multiple:false
+      });
 
-const pickDocument = async () => {
-  try {
-    
-    const result = await DocumentPicker.getDocumentAsync({
-      type: ["application/pdf", "image/*", "video/*"],
-      copyToCacheDirectory: true,
-    });
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const { uri, name, mimeType } = result.assets[0]; 
+        const file = await fetch(uri);
+        const fileData = await file.arrayBuffer();
 
-    if (!result.canceled && result.assets && result.assets[0]) {
-      const { uri, name, mimeType } = result.assets[0];
-      let docType: Document["type"] = "pdf";
-      if (mimeType?.startsWith("image/")) {
-        docType = "image";
-      } else if (mimeType?.startsWith("video/")) {
-        docType = "video";
+        const { data: uploadData, error } = await supabase.storage
+          .from("App")
+          .upload(`Documents/${name || `document_${Date.now()}`}`, fileData, {
+            contentType: mimeType,
+          });
+
+        if (error) {
+          console.log(error)
+        }
+
+        const newDocument: FileObject = {
+          id: uploadData?.path || "",
+          name: name || `document_${Date.now()}`,
+          created_at: new Date().toISOString(),
+          metadata: { mimetype: mimeType },
+        };
+
+        setDocuments((prev) => (prev ? [newDocument, ...prev] : [newDocument]));
       }
-
-      const savedDocuments = JSON.parse(
-        (await AsyncStorage.getItem("documents")) || "[]"
-      ) as Document[];
-      const newDocument = {
-        name: name ?? "Untitled Document",
-        uri: uri ?? "",
-        type: docType,
-        id: savedDocuments.length
-      };
-      const newSavedDocuments = [...savedDocuments, newDocument];
-      await AsyncStorage.setItem(
-        "documents",
-        JSON.stringify(newSavedDocuments)
-      );
-      setDocuments(newSavedDocuments)
+    } catch (err) {
+      console.error("Error picking document:", err);
     }
-  } catch (err) {
-    console.error("Error picking document:", err);
-  }
-};
-
+  };
 
   useEffect(() => {
     const getDocuments = async () => {
-      const savedDocuments = JSON.parse(
-        (await AsyncStorage.getItem("documents")) || "[]"
-      ) as Document[];
-      setDocuments(savedDocuments);
+      const { data, error } = await supabase.storage
+        .from("App")
+        .list("Documents", {
+          sortBy: { column: "created_at", order: "asc" },
+        });
+
+      if (error) {
+        console.error("Error fetching documents:", error);
+      } else {
+        setDocuments(data || []);
+      }
     };
+
     getDocuments();
   }, []);
 
@@ -76,7 +71,7 @@ const pickDocument = async () => {
           <Text style={styles.addButton}>+</Text>
         </Pressable>
       </View>
-      <DocumentList files={documents}/>
+      <DocumentList files={documents} />
     </View>
   );
 }
@@ -107,44 +102,5 @@ const styles = StyleSheet.create({
   addButton: {
     fontSize: 35,
     color: "white",
-  },
-  backButton: {
-    padding: 10,
-    backgroundColor: "#00439C",
-    alignSelf: "flex-start",
-    margin: 10,
-    borderRadius: 5,
-  },
-  backText: {
-    color: "white",
-    fontSize: 16,
-  },
-  pdf: {
-    flex: 1,
-    margin: 10,
-  },
-  image: {
-    flex: 1,
-    margin: 10,
-  },
-  video: {
-    flex: 1,
-    margin: 10,
-  },
-  documentItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    padding: 15,
-    marginVertical: 5,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 5,
-  },
-  documentName: {
-    fontSize: 16,
-    flex: 1,
-  },
-  documentType: {
-    fontSize: 12,
-    color: "#666",
   },
 });

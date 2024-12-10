@@ -2,27 +2,29 @@ import { View, Text, StyleSheet, Pressable } from "react-native";
 import React from "react";
 import { router } from "expo-router";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { Document } from "@/app/(tabs)/files";
+import { FileObject } from "@/utils/types";
 
-const DocumentListItem = ({ item }: { item: Document }) => {
+const DocumentListItem = ({ item }: { item: FileObject }) => {
+  console.log(item.metadata.mimetype)
+  if(item.name===".emptyFolderPlaceholder") return (<></>)
   return (
     <Pressable
       style={styles.container}
       onPress={() =>
         router.push({
           pathname: "/files/preview",
-          params: { documentId: item.id },
+          params: { name: item.name,type:item.metadata.mimetype },
         })
       }
     >
       <View style={styles.iconContainer}>
-        {item.type === "pdf" && (
+        {item.metadata.mimetype.includes("pdf") && (
           <FontAwesome name="file-pdf-o" size={20} color="#E57373" />
         )}
-        {item.type === "image" && (
+        {item.metadata.mimetype.includes("image") && (
           <FontAwesome name="file-image-o" size={20} color="#64B5F6" />
         )}
-        {item.type === "video" && (
+        {item.metadata.mimetype.includes("video") && (
           <FontAwesome name="file-video-o" size={20} color="#81C784" />
         )}
       </View>

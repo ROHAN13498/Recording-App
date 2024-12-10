@@ -1,74 +1,67 @@
-import { View, Text, StyleSheet } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useLocalSearchParams } from 'expo-router';
-import { Document } from './index'; // Adjust the import based on your file structure
-import Pdf from 'react-native-pdf';
-import { Image } from 'react-native';
-import { Video, ResizeMode } from 'expo-av';
+import { View, Text, StyleSheet,ActivityIndicator } from "react-native";
+import React, { useEffect, useState } from "react";
+import { useLocalSearchParams } from "expo-router";
+import Pdf from "react-native-pdf";
+import { Image } from "react-native";
+import { Video, ResizeMode } from "expo-av";
+import { GetSignedUrl } from "@/utils/GetSIgnedUrl";
 
 const PreviewScreen = () => {
-  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
-  const { documentId } = useLocalSearchParams(); // Fetch document ID from URL params
-
+  const { name, type } = useLocalSearchParams();
+  const [url, SetUrl] = useState<string>("");
   useEffect(() => {
     const fetchDocument = async () => {
-      const savedDocuments: Document[] = JSON.parse(
-        (await AsyncStorage.getItem("documents")) || "[]"
+      const signedUrl = await GetSignedUrl(
+        "Documents",
+        Array.isArray(name) ? name[0] : name
       );
-
-      const documentIndex = parseInt(documentId as string, 10);
-
-      if (documentIndex >= 0 && documentIndex < savedDocuments.length) {
-        setSelectedDocument(savedDocuments[documentIndex]); // Set the selected document based on ID
+      if (signedUrl) {
+        SetUrl(signedUrl);
       }
     };
 
-    if (documentId) {
-      fetchDocument(); 
-    }
-  }, [documentId]);
+    fetchDocument();
+  }, [name]);
 
   const renderSelectedDocument = () => {
-    if (!selectedDocument) return <Text>Loading...</Text>; 
+    if (!url) return (<ActivityIndicator size="large" color="#ADD8E6" />)
 
-    switch (selectedDocument.type) {
-      case 'pdf':
-        return (
-          <Pdf
-            source={{ uri: selectedDocument.uri }}
-            style={styles.documentContent}
-            onError={(error: any) => console.error(error)} 
-          />
-        );
-      case 'image':
-        return (
-          <Image
-            source={{ uri: selectedDocument.uri }}
-            style={styles.documentContent}
-            resizeMode="contain" 
-          />
-        );
-      case 'video':
-        return (
-          <Video
-            source={{ uri: selectedDocument.uri }}
-            style={styles.documentContent}
-            useNativeControls
-            resizeMode={ResizeMode.CONTAIN}
-          />
-        );
-      default:
-        return <Text>Unsupported document type</Text>;
+    if (type?.includes("pdf")) {
+      return (
+        <Pdf
+          source={{ uri: url }}
+          style={styles.documentContent}
+          onError={(error: any) => console.error(error)}
+        />
+      );
     }
+    if (type?.includes("image")) {
+      return (
+        <Image
+          source={{ uri: url }}
+          style={styles.documentContent}
+          resizeMode="contain"
+        />
+      );
+    }
+    if (type?.includes("video")) {
+      return (
+        <Video
+          source={{ uri: url }}
+          style={styles.documentContent}
+          useNativeControls
+          resizeMode={ResizeMode.CONTAIN}
+        />
+      );
+    }
+
+    return <Text>Unsupported document type</Text>;
   };
 
   return (
     <View style={styles.container}>
-      {selectedDocument && (
-        <Text style={styles.documentName}>{selectedDocument.name}</Text>
-      )}
-      {renderSelectedDocument()} 
+      {url && <Text style={styles.documentName}>{name}</Text>}
+      {renderSelectedDocument()}
     </View>
   );
 };
@@ -76,20 +69,20 @@ const PreviewScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
-    backgroundColor:"white"
+    backgroundColor: "white",
   },
   documentName: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 20, // Space between the name and the content
   },
   documentContent: {
     flex: 1,
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
 });
 

@@ -3,12 +3,8 @@ import { View, FlatList, StyleSheet, Text, TextInput } from "react-native";
 import AudioListItem from "./AudioListItem";
 import { useDebounce } from "@/hooks/useDebounce";
 import { supabase } from "@/utils/supabase";
+import { FileObject } from "@/utils/types";
 
-interface FileObject {
-  id: string;
-  name: string;
-  created_at: string;
-}
 
 const AudioList = () => {
   const [audioData, setAudioData] = useState<FileObject[]>([]);
