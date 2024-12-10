@@ -66,7 +66,7 @@ const PreviewScreen = () => {
   return (
     <View style={styles.container}>
       {selectedDocument && (
-        <Text style={styles.documentName}>{selectedDocument.name}</Text> // Render the document name
+        <Text style={styles.documentName}>{selectedDocument.name}</Text>
       )}
       {renderSelectedDocument()} 
     </View>

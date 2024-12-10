@@ -12,7 +12,7 @@ export default function Index() {
           <Text style={styles.addButton} onPress={()=>{router.push("/audio/record")}}>+</Text>
         </Pressable>
       </View>
-
+    
       <AudioList />
     </View>
   );
