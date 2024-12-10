@@ -1,6 +1,6 @@
 import SaveButton from "@/components/SaveButton";
+import { supabase } from "@/utils/supabase";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import Slider from "@react-native-community/slider";
 import { Audio, AVPlaybackStatus } from "expo-av";
 import { router, useLocalSearchParams } from "expo-router";
@@ -9,8 +9,8 @@ import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function Preview() {
   const params = useLocalSearchParams();
-  const uri = Array.isArray(params.uri) ? params.uri[0] : params.uri;
-  const showSaveButton=(params.showSaveButton ==="true") ? true :false;
+  const url = Array.isArray(params.url) ? params.url[0] : params.url;
+  const showSaveButton = params.showSaveButton === "true" ? true : false;
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -18,15 +18,14 @@ export default function Preview() {
 
   useEffect(() => {
     const loadAudio = async () => {
-      if (uri) {
+      if (url) {
         try {
           if (sound) {
             await sound.unloadAsync();
           }
 
           const { sound: newSound } = await Audio.Sound.createAsync(
-            { uri },
-
+            { uri:url },
             { shouldPlay: false }
           );
 
@@ -53,7 +52,7 @@ export default function Preview() {
       }
     };
 
-    if (uri) {
+    if (url) {
       loadAudio();
     }
 
@@ -62,7 +61,7 @@ export default function Preview() {
         sound.unloadAsync();
       }
     };
-  }, [uri]);
+  }, [url]);
 
   const playPauseAudio = async () => {
     if (sound) {
@@ -88,31 +87,35 @@ export default function Preview() {
 
   const saveAudio = async () => {
     try {
-      const savedAudios = JSON.parse(
-        (await AsyncStorage.getItem('savedAudios')) || '[]' // Use 'savedAudios' consistently
-      );
-  
-      const newAudio = {
-        uri,
-        name: `Audio ${savedAudios.length + 1}`,
-        duration: `${Math.floor(duration / 60)}:${Math.floor(duration % 60)
-          .toString()
-          .padStart(2, '0')}`, 
-      };
-      await AsyncStorage.setItem(
-        'savedAudios', 
-        JSON.stringify([...savedAudios, newAudio])
-      );
+      if (!url) {
+        throw new Error("No audio url found.");
+      }
 
-      Alert.alert('Success', 'Audio saved successfully!');
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch audio file from url.");
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+
+      const fileName = `Audios/audio_${Date.now()}.mp3`;
+
+      const { data } = await supabase.storage
+        .from("App")
+        .upload(fileName, arrayBuffer, {
+          contentType: "audio/mpeg",
+        });
+      console.log("Audio uploaded successfully:", data);
+      Alert.alert("Success", "Audio saved successfully.");
     } catch (error) {
-      console.error('Error saving audio:', error);
-      Alert.alert('Error', 'Failed to save the audio.');
+      console.error("Error uploading audio:", error);
+      Alert.alert("Error", "An unexpected error occurred.");
     } finally {
       router.replace("/audio");
     }
   };
-  
+
   const handleSeek = async (value: number) => {
     if (sound) {
       try {
@@ -125,7 +128,6 @@ export default function Preview() {
     }
   };
 
-  // Utility function to format time in mm:ss
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -136,7 +138,7 @@ export default function Preview() {
 
   return (
     <View style={styles.container}>
-      {uri ? (
+      {url ? (
         <>
           <Slider
             style={styles.slider}

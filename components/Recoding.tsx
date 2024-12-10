@@ -92,7 +92,7 @@ const Recording = () => {
 
         router.push({
           pathname: "/audio/preview",
-          params: { uri: newUri ,showSaveButton:"true"},
+          params: { url: newUri ,showSaveButton:"true"},
         });
       }
     } catch (error) {

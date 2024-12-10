@@ -1,37 +1,30 @@
 import React, { useState, useEffect } from "react";
 import { View, FlatList, StyleSheet, Text, TextInput } from "react-native";
 import AudioListItem from "./AudioListItem";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useDebounce } from "@/hooks/useDebounce";
+import { supabase } from "@/utils/supabase";
 
-interface AudioItem {
-  uri: string;
-  duration: string;
+interface FileObject {
+  id: string;
   name: string;
+  created_at: string;
 }
 
 const AudioList = () => {
-  const [audioData, setAudioData] = useState<AudioItem[]>([]);
-  const [filteredData, setFilteredData] = useState<AudioItem[]>([]);
+  const [audioData, setAudioData] = useState<FileObject[]>([]);
+  const [filteredData, setFilteredData] = useState<FileObject[]>([]); 
   const [searchInput, setSearchInput] = useState("");
-  const debouncedValue = useDebounce(searchInput); 
+  const debouncedValue = useDebounce(searchInput,500); 
 
   const loadAudioData = async () => {
     try {
-      const savedAudios = await AsyncStorage.getItem("savedAudios");
-
-      if (savedAudios) {
-        const parsedAudios: AudioItem[] = JSON.parse(savedAudios);
-        setAudioData(parsedAudios);
-        setFilteredData(parsedAudios);
-      } else {
-        setAudioData([]);
-        setFilteredData([]);
-      }
+      const { data } = await supabase.storage.from("App").list("Audios", {
+        sortBy: { column: "created_at", order: "asc" },
+      });
+      setAudioData(data || []); 
+      setFilteredData(data || []);
     } catch (error) {
-      console.error("Error loading audio data from AsyncStorage:", error);
-      setAudioData([]);
-      setFilteredData([]);
+      console.error("Error loading audio data from Supabase:", error);
     }
   };
 
@@ -40,12 +33,12 @@ const AudioList = () => {
   }, []);
 
   useEffect(() => {
-    console.log("Debounced value:", debouncedValue); 
+    console.log(debouncedValue)
     const filtered = audioData.filter((item) =>
       item.name.toLowerCase().includes(debouncedValue.toLowerCase())
     );
     setFilteredData(filtered);
-  }, [debouncedValue, audioData]);
+  }, [debouncedValue, audioData]); 
 
   return (
     <View style={styles.container}>
@@ -56,21 +49,17 @@ const AudioList = () => {
         onChangeText={(text) => setSearchInput(text)}
       />
       {filteredData.length === 0 ? (
-        <Text>No audio items available</Text>
+        <Text style={{ justifyContent: "center", alignItems: "center" }}>
+          No audio items available
+        </Text>
       ) : (
-        <>
-          <FlatList
-            data={filteredData}
-            renderItem={({ item }) => (
-              <AudioListItem
-                uri={item.uri}
-                duration={item.duration}
-                name={item.name}
-              />
-            )}
-            keyExtractor={(item, index) => index.toString()}
-          />
-        </>
+        <FlatList
+          data={filteredData}
+          renderItem={({ item }) => (
+            <AudioListItem id={item.id} name={item.name} />
+          )}
+          keyExtractor={(item) => item.id}
+        />
       )}
     </View>
   );

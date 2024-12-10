@@ -23,6 +23,7 @@
     "@react-navigation/bottom-tabs": "^7.0.0",
     "@react-navigation/native": "^7.0.0",
     "@supabase/supabase-js": "^2.47.3",
+    "base64-arraybuffer": "^1.0.2",
     "expo": "~52.0.15",
     "expo-audio": "~0.3.0",
     "expo-av": "~15.0.1",
