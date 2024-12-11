@@ -1,62 +1,97 @@
 import DocumentList from "@/components/DocumentList";
+import Loader from "@/components/Loader";
 import { supabase } from "@/utils/supabase";
 import { FileObject } from "@/utils/types";
 import * as DocumentPicker from "expo-document-picker";
 import React, { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import Toast from "react-native-toast-message";
 
 export default function Index() {
-  const [documents, setDocuments] = useState<FileObject[] | null>([]);
+  const [documents, setDocuments] = useState<FileObject[] | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true); 
 
   const pickDocument = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: ["application/pdf", "image/*", "video/*"],
         copyToCacheDirectory: true,
-        multiple:false
+        multiple: false,
       });
+      setIsLoading(true);  
 
       if (!result.canceled && result.assets && result.assets[0]) {
-        const { uri, name, mimeType } = result.assets[0]; 
+        const { uri, name, mimeType } = result.assets[0];
         const file = await fetch(uri);
         const fileData = await file.arrayBuffer();
 
-        const { data: uploadData, error } = await supabase.storage
+        const { data, error } = await supabase.storage
           .from("App")
           .upload(`Documents/${name || `document_${Date.now()}`}`, fileData, {
             contentType: mimeType,
           });
 
         if (error) {
-          console.log(error)
+          throw new Error(error.message);
         }
 
         const newDocument: FileObject = {
-          id: uploadData?.path || "",
+          id: data?.path || "",
           name: name || `document_${Date.now()}`,
           created_at: new Date().toISOString(),
           metadata: { mimetype: mimeType },
         };
 
         setDocuments((prev) => (prev ? [newDocument, ...prev] : [newDocument]));
+        Toast.show({
+          type: "success",
+          text1: "Document Uploaded",
+          text2: `${name || "New Document"} uploaded successfully.`,
+          position: "bottom",
+        });
       }
-    } catch (err) {
-      console.error("Error picking document:", err);
+    } catch (err: any) {
+      Toast.show({
+        type: "error",
+        text1: "Unexpected Error",
+        text2: err.message || "An unknown error occurred",
+        position: "bottom",
+      });
+    } finally {
+      setIsLoading(false);  // Set loading to false after the upload is completed
     }
   };
 
   useEffect(() => {
     const getDocuments = async () => {
-      const { data, error } = await supabase.storage
-        .from("App")
-        .list("Documents", {
-          sortBy: { column: "created_at", order: "asc" },
-        });
+      try {
+        const { data, error } = await supabase.storage
+          .from("App")
+          .list("Documents", {
+            sortBy: { column: "created_at", order: "asc" },
+          });
 
-      if (error) {
-        console.error("Error fetching documents:", error);
-      } else {
+        if (error) {
+          console.error("Error fetching documents:", error);
+          Toast.show({
+            type: "error",
+            text1: "Fetch Error",
+            text2: error.message,
+            position: "bottom",
+          });
+          return;
+        }
         setDocuments(data || []);
+      } catch (err) {
+        console.error("Error fetching documents:", err);
+        Toast.show({
+          type: "error",
+          text1: "Unexpected Error",
+          text2: "Failed to fetch documents.",
+          position: "bottom",
+        });
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -71,7 +106,11 @@ export default function Index() {
           <Text style={styles.addButton}>+</Text>
         </Pressable>
       </View>
-      <DocumentList files={documents} />
+      {isLoading ? (
+        <Loader />
+      ) : (
+        <DocumentList files={documents} />
+      )}
     </View>
   );
 }
